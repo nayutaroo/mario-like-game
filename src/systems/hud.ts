@@ -9,83 +9,96 @@ export type HudHandle = {
   destroy(): void;
 };
 
-const HUD_HEIGHT = 48;
-const TEXT_SIZE = 24;
-const TEXT_Y = 12;
-const CELL_WIDTH = 280;
-const CELL_X_START = 20;
+const HUD_HEIGHT = 56;
+const PANEL_PAD_X = 16;
+const PANEL_PAD_Y = 8;
+const CELL_GAP = 16;
+const ICON_SIZE = 28;
+const VALUE_SIZE = 24;
+const TIME_LOW_THRESHOLD = 60;
 
-const formatScore = (n: number): string => `🏆 ${n}`;
-const formatBerries = (n: number): string => `🫐 ${n}`;
-const formatLives = (n: number): string => `🐤 x${n}`;
-const formatTime = (seconds: number): string => `⏱ ${Math.max(0, Math.ceil(seconds))}`;
+function buildCell(k: KCtx, x: number, icon: string, initial: string, width: number) {
+  const bg = k.add([
+    k.rect(width, HUD_HEIGHT - 16, { radius: 10 }),
+    k.pos(x, PANEL_PAD_Y),
+    k.color(0, 0, 0),
+    k.opacity(0.4),
+    k.outline(1, k.rgb(255, 255, 255)),
+    k.fixed(),
+    k.z(51),
+  ]);
+  const iconObj = k.add([
+    k.text(icon, { size: ICON_SIZE, font: EMOJI_FONT }),
+    k.pos(x + 12, HUD_HEIGHT / 2),
+    k.anchor("left"),
+    k.fixed(),
+    k.z(52),
+  ]);
+  const valueObj = k.add([
+    k.text(initial, { size: VALUE_SIZE, font: EMOJI_FONT }),
+    k.pos(x + 12 + ICON_SIZE + 8, HUD_HEIGHT / 2),
+    k.anchor("left"),
+    k.color(255, 255, 255),
+    k.fixed(),
+    k.z(52),
+  ]);
+  return { bg, icon: iconObj, value: valueObj, width };
+}
 
 export function createHud(k: KCtx): HudHandle {
   const all: ReturnType<KCtx["add"]>[] = [];
 
-  const bg = k.add([
+  // 上部ストリップ全体の背景バー（柔らかめ）
+  const stripBg = k.add([
     k.rect(k.width(), HUD_HEIGHT),
     k.pos(0, 0),
-    k.color(0, 0, 0),
-    k.opacity(0.5),
+    k.color(10, 14, 26),
+    k.opacity(0.55),
     k.fixed(),
     k.z(50),
   ]);
-  all.push(bg);
+  all.push(stripBg);
 
-  const scoreText = k.add([
-    k.text(formatScore(0), { size: TEXT_SIZE, font: EMOJI_FONT }),
-    k.pos(CELL_X_START, TEXT_Y),
-    k.color(255, 255, 255),
-    k.fixed(),
-    k.z(51),
-  ]);
-  all.push(scoreText);
+  // セル幅: 4 つを並べる
+  const totalContent = k.width() - PANEL_PAD_X * 2;
+  const cellW = (totalContent - CELL_GAP * 3) / 4;
+  let cursor = PANEL_PAD_X;
 
-  const berryText = k.add([
-    k.text(formatBerries(0), { size: TEXT_SIZE, font: EMOJI_FONT }),
-    k.pos(CELL_X_START + CELL_WIDTH, TEXT_Y),
-    k.color(255, 255, 255),
-    k.fixed(),
-    k.z(51),
-  ]);
-  all.push(berryText);
+  const score = buildCell(k, cursor, "🏆", "0", cellW);
+  cursor += cellW + CELL_GAP;
+  const berries = buildCell(k, cursor, "🫐", "0", cellW);
+  cursor += cellW + CELL_GAP;
+  const lives = buildCell(k, cursor, "🐤", "x3", cellW);
+  cursor += cellW + CELL_GAP;
+  const time = buildCell(k, cursor, "⏱", "300", cellW);
 
-  const livesText = k.add([
-    k.text(formatLives(3), { size: TEXT_SIZE, font: EMOJI_FONT }),
-    k.pos(CELL_X_START + CELL_WIDTH * 2, TEXT_Y),
-    k.color(255, 255, 255),
-    k.fixed(),
-    k.z(51),
-  ]);
-  all.push(livesText);
-
-  const timeText = k.add([
-    k.text(formatTime(300), { size: TEXT_SIZE, font: EMOJI_FONT }),
-    k.pos(CELL_X_START + CELL_WIDTH * 3, TEXT_Y),
-    k.color(255, 255, 255),
-    k.fixed(),
-    k.z(51),
-  ]);
-  all.push(timeText);
+  for (const cell of [score, berries, lives, time]) {
+    all.push(cell.bg, cell.icon, cell.value);
+  }
 
   return {
     setScore(n) {
-      scoreText.text = formatScore(n);
+      score.value.text = String(n);
     },
     setBerries(n) {
-      berryText.text = formatBerries(n);
+      berries.value.text = String(n);
     },
     setLives(n) {
-      livesText.text = formatLives(n);
+      lives.value.text = `x${n}`;
     },
     setTime(seconds) {
-      timeText.text = formatTime(seconds);
+      const v = Math.max(0, Math.ceil(seconds));
+      time.value.text = String(v);
+      // 時間残り少ない時は赤く点滅
+      if (v <= TIME_LOW_THRESHOLD) {
+        const blink = Math.floor(v * 2) % 2 === 0;
+        time.value.color = blink ? k.rgb(255, 90, 90) : k.rgb(255, 200, 200);
+      } else {
+        time.value.color = k.rgb(255, 255, 255);
+      }
     },
     destroy() {
-      for (const o of all) {
-        o.destroy();
-      }
+      for (const o of all) o.destroy();
       all.length = 0;
     },
   };
