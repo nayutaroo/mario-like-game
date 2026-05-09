@@ -1,3 +1,4 @@
+import { setTouchButtonsVisible } from "../systems/touch-buttons";
 import type { GameoverReason, KCtx } from "../types";
 
 const REASON_LABEL: Record<GameoverReason, string> = {
@@ -8,6 +9,7 @@ const REASON_LABEL: Record<GameoverReason, string> = {
 
 export function registerGameoverScene(k: KCtx): void {
   k.scene("gameover", (opt: { reason: GameoverReason }) => {
+    setTouchButtonsVisible(false);
     k.add([k.rect(k.width(), k.height()), k.color(20, 20, 30)]);
 
     k.add([

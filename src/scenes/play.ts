@@ -15,11 +15,11 @@ import { addSparkle } from "../entities/items/sparkle";
 import { addMysteryBlock } from "../entities/mystery-block";
 import { addPlayer } from "../entities/player";
 import { addSemiSolid } from "../entities/semi-solid";
-import { addTouchButtons, isTouchDevice } from "../entities/touch-buttons";
 import { addWarp } from "../entities/warp";
 import { getLevel } from "../levels";
 import type { MysteryContent } from "../levels/types";
 import { createHud } from "../systems/hud";
+import { setTouchButtonsVisible } from "../systems/touch-buttons";
 import type { KCtx, StageId } from "../types";
 import { buildHelpOverlay } from "./help";
 
@@ -375,9 +375,7 @@ export function registerPlayScene(k: KCtx): void {
       k.z(60),
     ]);
 
-    if (isTouchDevice()) {
-      addTouchButtons(k);
-    }
+    setTouchButtonsVisible(true);
 
     let helpObjs: ReturnType<KCtx["add"]>[] = [];
 

@@ -1,7 +1,9 @@
+import { setTouchButtonsVisible } from "../systems/touch-buttons";
 import type { KCtx } from "../types";
 
 export function registerTitleScene(k: KCtx): void {
   k.scene("title", () => {
+    setTouchButtonsVisible(false);
     k.add([k.rect(k.width(), k.height()), k.color(30, 60, 110)]);
 
     k.add([

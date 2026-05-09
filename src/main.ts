@@ -5,6 +5,7 @@ import { registerHelpScene } from "./scenes/help";
 import { registerPlayScene } from "./scenes/play";
 import { registerTitleScene } from "./scenes/title";
 import { setupFullscreenButton } from "./systems/fullscreen";
+import { isTouchDevice, setupTouchButtons } from "./systems/touch-buttons";
 
 // 高 DPR (Retina / モバイル) で滲まないよう、デバイスのピクセル比を採用。
 // crisp: true はピクセルアート向けの最近傍補間で、絵文字 + 矩形ベースの本作では
@@ -25,5 +26,9 @@ registerGameoverScene(k);
 registerHelpScene(k);
 
 setupFullscreenButton();
+
+if (isTouchDevice()) {
+  setupTouchButtons();
+}
 
 k.go("title");
