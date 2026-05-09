@@ -5,6 +5,7 @@ const WIDTH = 28;
 const HEIGHT = 26;
 const WALK_SPEED = 60;
 const ROLL_SPEED = 360;
+const KICK_GRACE = 0.12;
 
 type DangoMode = "walk" | "ball" | "roll";
 
@@ -27,11 +28,15 @@ export function addDangomushi(k: KCtx, x: number, y: number) {
     k.pos(0, -HEIGHT / 2),
   ]);
 
-  const state = { mode: "walk" as DangoMode, dir: -1 };
-  const extras = obj as unknown as { stillBall?: boolean };
+  const state = { mode: "walk" as DangoMode, dir: -1, kickGrace: 0 };
+  const extras = obj as unknown as { stillBall?: boolean; kickGrace?: number };
 
   k.onUpdate(() => {
     if (!obj.exists() || obj.paused) return;
+    if (state.kickGrace > 0) {
+      state.kickGrace = Math.max(0, state.kickGrace - k.dt());
+      extras.kickGrace = state.kickGrace;
+    }
     if (state.mode === "walk") {
       obj.vel.x = state.dir * WALK_SPEED;
     } else if (state.mode === "ball") {
@@ -64,6 +69,8 @@ export function addDangomushi(k: KCtx, x: number, y: number) {
     if (state.mode === "ball") {
       state.mode = "roll";
       extras.stillBall = false;
+      state.kickGrace = KICK_GRACE;
+      extras.kickGrace = KICK_GRACE;
       state.dir = -fromDir;
       obj.color = k.rgb(200, 130, 70);
     }
