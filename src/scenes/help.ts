@@ -1,4 +1,5 @@
 import { EMOJI_FONT } from "../config";
+import { setTouchButtonsVisible } from "../systems/touch-buttons";
 import type { KCtx } from "../types";
 
 const CONTROLS: ReadonlyArray<readonly [string, string]> = [
@@ -21,6 +22,7 @@ const ITEMS: ReadonlyArray<readonly [string, string]> = [
 
 export function registerHelpScene(k: KCtx): void {
   k.scene("help", () => {
+    setTouchButtonsVisible(false);
     k.add([k.rect(k.width(), k.height()), k.color(20, 24, 40)]);
 
     k.add([
