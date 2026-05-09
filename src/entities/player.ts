@@ -3,15 +3,17 @@ import type { KCtx } from "../types";
 
 const PLAYER_WIDTH = 36;
 const PLAYER_HEIGHT = 44;
+const STOMP_BOUNCE = 360;
 
-export function addPlayer(k: KCtx, x: number, y: number) {
+export function addPlayer(k: KCtx, spawnX: number, spawnY: number) {
   const obj = k.add([
     k.rect(PLAYER_WIDTH, PLAYER_HEIGHT),
-    k.pos(x, y),
+    k.pos(spawnX, spawnY),
     k.color(240, 200, 60),
     k.outline(2, k.rgb(80, 50, 0)),
     k.area(),
     k.body({ jumpForce: PHYSICS.jumpVel }),
+    k.opacity(1),
     k.anchor("bot"),
     "player",
   ]);
@@ -19,9 +21,43 @@ export function addPlayer(k: KCtx, x: number, y: number) {
   let coyoteTimer = 0;
   let jumpBufferTimer = 0;
   let isJumpHeld = false;
+  let invincibleTimer = 0;
+  let paused = false;
+
+  const reset = (rx: number = spawnX, ry: number = spawnY) => {
+    obj.pos = k.vec2(rx, ry);
+    obj.vel = k.vec2(0, 0);
+    coyoteTimer = 0;
+    jumpBufferTimer = 0;
+    isJumpHeld = false;
+  };
+
+  const damage = (): boolean => {
+    if (invincibleTimer > 0) return false;
+    reset();
+    invincibleTimer = PHYSICS.invincibleTime;
+    return true;
+  };
+
+  const setPaused = (p: boolean) => {
+    paused = p;
+    obj.paused = p;
+    if (p) {
+      jumpBufferTimer = 0;
+    }
+  };
 
   k.onUpdate(() => {
     const dt = k.dt();
+
+    if (invincibleTimer > 0) {
+      invincibleTimer = Math.max(0, invincibleTimer - dt);
+      const blink = Math.floor(invincibleTimer * 12) % 2 === 0;
+      obj.opacity = invincibleTimer > 0 ? (blink ? 0.35 : 1) : 1;
+    }
+
+    if (paused) return;
+
     const onGround = obj.isGrounded();
 
     if (onGround) {
@@ -48,26 +84,28 @@ export function addPlayer(k: KCtx, x: number, y: number) {
     const dir = (right ? 1 : 0) + (left ? -1 : 0);
     const targetSpeed = dir * (dash ? PHYSICS.dashSpeed : PHYSICS.walkSpeed);
     const accel = onGround ? PHYSICS.groundAccel : PHYSICS.airAccel;
-    const decel = onGround ? PHYSICS.groundDecel : PHYSICS.airDecel;
 
     if (dir !== 0) {
       const diff = targetSpeed - obj.vel.x;
       const change = Math.sign(diff) * Math.min(Math.abs(diff), accel * dt);
       obj.vel.x += change;
-    } else if (obj.vel.x !== 0) {
-      const change = Math.sign(obj.vel.x) * Math.min(Math.abs(obj.vel.x), decel * dt);
+    } else if (onGround && obj.vel.x !== 0) {
+      const change = Math.sign(obj.vel.x) * Math.min(Math.abs(obj.vel.x), PHYSICS.groundDecel * dt);
       obj.vel.x -= change;
     }
   });
 
   k.onKeyPress("space", () => {
+    if (paused) return;
     jumpBufferTimer = PHYSICS.jumpBufferTime;
   });
   k.onKeyPress("k", () => {
+    if (paused) return;
     jumpBufferTimer = PHYSICS.jumpBufferTime;
   });
 
   const releaseJump = () => {
+    if (paused) return;
     if (isJumpHeld && obj.vel.y < 0) {
       obj.vel.y *= PHYSICS.jumpReleaseCut;
     }
@@ -76,14 +114,20 @@ export function addPlayer(k: KCtx, x: number, y: number) {
   k.onKeyRelease("space", releaseJump);
   k.onKeyRelease("k", releaseJump);
 
-  return {
-    obj,
-    reset: (rx: number, ry: number) => {
-      obj.pos = k.vec2(rx, ry);
-      obj.vel = k.vec2(0, 0);
-      coyoteTimer = 0;
-      jumpBufferTimer = 0;
-      isJumpHeld = false;
-    },
-  };
+  obj.onCollide("enemy", (enemy, col) => {
+    if (paused) return;
+    if (col?.isBottom() && obj.vel.y > 0) {
+      enemy.trigger("stomped");
+      obj.vel.y = -STOMP_BOUNCE;
+      return;
+    }
+    if ((enemy as { stillBall?: boolean }).stillBall) {
+      const fromDir = col?.isLeft() ? 1 : -1;
+      enemy.trigger("kicked", fromDir);
+      return;
+    }
+    damage();
+  });
+
+  return { obj, reset, damage, setPaused };
 }

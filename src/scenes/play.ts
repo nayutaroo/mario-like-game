@@ -1,4 +1,7 @@
 import { CANVAS, PHYSICS } from "../config";
+import { addDangomushi } from "../entities/enemies/dangomushi";
+import { addImomushi } from "../entities/enemies/imomushi";
+import { addKobachi } from "../entities/enemies/kobachi";
 import { addPlayer } from "../entities/player";
 import type { KCtx, StageId } from "../types";
 import { buildHelpOverlay } from "./help";
@@ -52,6 +55,14 @@ export function registerPlayScene(k: KCtx): void {
 
     const player = addPlayer(k, SPAWN_X, SPAWN_Y);
 
+    addImomushi(k, 320, 638);
+    addImomushi(k, 900, 638);
+    addKobachi(k, 580, 470, 480, 700);
+    addDangomushi(k, 1300, 558);
+    addImomushi(k, 1900, 638);
+    addKobachi(k, 2050, 420, 1900, 2200);
+    addDangomushi(k, 2300, 638);
+
     player.obj.onCollide("goal", () => {
       k.go("gameover", { reason: "cleared" });
     });
@@ -77,12 +88,22 @@ export function registerPlayScene(k: KCtx): void {
     ]);
 
     let helpObjs: ReturnType<KCtx["add"]>[] = [];
+
+    const setWorldPaused = (paused: boolean) => {
+      player.setPaused(paused);
+      for (const e of k.get("enemy")) {
+        e.paused = paused;
+      }
+    };
+
     const closeHelp = () => {
       for (const o of helpObjs) o.destroy();
       helpObjs = [];
+      setWorldPaused(false);
     };
     const openHelp = () => {
       helpObjs = buildHelpOverlay(k);
+      setWorldPaused(true);
     };
     k.onKeyPress("h", () => {
       if (helpObjs.length > 0) {
