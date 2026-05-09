@@ -14,6 +14,7 @@ import { addSeed } from "../entities/items/seed";
 import { addSparkle } from "../entities/items/sparkle";
 import { addMysteryBlock } from "../entities/mystery-block";
 import { addPlayer } from "../entities/player";
+import { addTouchButtons, isTouchDevice } from "../entities/touch-buttons";
 import { addWarp } from "../entities/warp";
 import { getLevel } from "../levels";
 import type { MysteryContent } from "../levels/types";
@@ -366,6 +367,10 @@ export function registerPlayScene(k: KCtx): void {
       k.fixed(),
       k.z(60),
     ]);
+
+    if (isTouchDevice()) {
+      addTouchButtons(k);
+    }
 
     let helpObjs: ReturnType<KCtx["add"]>[] = [];
 

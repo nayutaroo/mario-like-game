@@ -1,5 +1,11 @@
 import { EMOJI_FONT, PHYSICS } from "../config";
 import { createPyoState } from "../systems/pyo-state";
+import {
+  consumeVJumpPress,
+  consumeVJumpRelease,
+  consumeVShootPress,
+  isVKeyDown,
+} from "../systems/virtual-input";
 import type { ItemKind, KCtx, PlayerForm } from "../types";
 
 const PLAYER_WIDTH = 36;
@@ -223,9 +229,26 @@ export function addPlayer(
       isJumpHeld = true;
     }
 
-    const left = k.isKeyDown("left") || k.isKeyDown("a");
-    const right = k.isKeyDown("right") || k.isKeyDown("d");
-    const dash = k.isKeyDown("shift");
+    const left = k.isKeyDown("left") || k.isKeyDown("a") || isVKeyDown("left");
+    const right = k.isKeyDown("right") || k.isKeyDown("d") || isVKeyDown("right");
+    const dash = k.isKeyDown("shift") || isVKeyDown("dash");
+
+    // 仮想ジャンプ押下 → ジャンプバッファに登録
+    if (consumeVJumpPress() && !isLocked()) {
+      jumpBufferTimer = PHYSICS.jumpBufferTime;
+    }
+    // 仮想ジャンプ解放 → 可変ジャンプカット
+    if (consumeVJumpRelease() && !isLocked()) {
+      if (isJumpHeld && obj.vel.y < 0) obj.vel.y *= PHYSICS.jumpReleaseCut;
+      isJumpHeld = false;
+    }
+    // 仮想シュート押下 → 種発射（リンゴ状態のみ）
+    if (consumeVShootPress() && !isLocked()) {
+      if (state.form() === "apple" && seedCooldown <= 0) {
+        callbacks.onSeedFire?.(obj.pos.x, obj.pos.y - PLAYER_HEIGHT / 2, facing);
+        seedCooldown = SEED_COOLDOWN;
+      }
+    }
 
     const dir = (right ? 1 : 0) + (left ? -1 : 0);
     if (dir === 1) facing = 1;

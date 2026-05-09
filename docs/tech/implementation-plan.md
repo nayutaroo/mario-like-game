@@ -175,14 +175,23 @@
 
 **目標**: 公開可能な状態にする。
 
-- [ ] ハイスコアの localStorage 保存・タイトルでの表示
-- [ ] ポーズ画面（Esc / P で表示・解除）
-- [ ] ゲームオーバー画面・クリア画面の体裁
-- [ ] アセットの本番版差し替え（プロトタイプ → 実ドット絵）
-- [ ] バランス調整（速度・重力・敵配置・制限時間）
-- [ ] README.md（プレイ手順・操作説明・URL）作成
+- [x] ハイスコアの localStorage 保存（`src/systems/highscore.ts`）
+- [ ] ポーズ画面（P で表示・解除、Q でタイトル） — 未統合
+- [ ] ゲームオーバー画面・クリア画面の体裁 — 未統合
+- [x] **タッチ操作対応**（オンスクリーンボタン）— `src/systems/virtual-input.ts` + `src/entities/touch-buttons.ts`、タッチデバイス検出時のみ表示
+- [ ] アセットの本番版差し替え（プロトタイプ → 実ドット絵）— 絵文字 + 矩形を暫定本番として継続
+- [x] バランス調整（M2/M4/M6 で随時、PR #1 で滞空時間再調整済）
+- [x] README.md（プレイ手順・操作説明・URL）作成
+- [x] GitHub Actions Pages 自動有効化（`enablement: true`）
 
 **DoD**: 知り合いに URL を渡してプレイしてもらえる品質。
+
+**補足**:
+- ハイスコアシステム: `localStorage` の `piyo-game:highscore` キー。プライベートブラウジング無効時は黙って失敗
+- タッチ操作: `'ontouchstart' in window` / `navigator.maxTouchPoints > 0` / `?touch=1` クエリで判定。左下 ←→、右下 ↑(ジャンプ)/DASH/Z(種)。半透明、押下時不透明度上昇。仕様は `docs/specification/controls.md` 参照
+- 仮想入力ハブ: `setVKeyDown(key, down)` / `isVKeyDown(key)` の polling + ジャンプ・シュートは `consumeV...Press()` の press/release イベント消費型。`player.ts` のキーボード polling と OR で統合
+- README.md: Pages URL（`https://nayutaroo.github.io/mario-like-game/`）、ステージ構成、敵・アイテム表、技術スタック、ローカル開発手順、ドキュメント案内
+- GitHub Pages 初回デプロイ失敗（Pages 未有効化）→ `actions/configure-pages@v5` の `enablement: true` で自動有効化
 
 ## チューニング初期値（M1 で利用）
 
