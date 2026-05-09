@@ -1,7 +1,9 @@
-import { CANVAS, PHYSICS } from "../config";
+import { PHYSICS } from "../config";
+import { addCheckpoint } from "../entities/checkpoint";
 import { addDangomushi } from "../entities/enemies/dangomushi";
 import { addImomushi } from "../entities/enemies/imomushi";
 import { addKobachi } from "../entities/enemies/kobachi";
+import { addGoal } from "../entities/goal";
 import { addAcorn } from "../entities/items/acorn";
 import { addApple } from "../entities/items/apple";
 import { addBerry } from "../entities/items/berry";
@@ -10,13 +12,10 @@ import { addLeaf } from "../entities/items/leaf";
 import { addSeed } from "../entities/items/seed";
 import { addSparkle } from "../entities/items/sparkle";
 import { addPlayer } from "../entities/player";
+import { getLevel } from "../levels";
 import { createHud } from "../systems/hud";
 import type { KCtx, StageId } from "../types";
 import { buildHelpOverlay } from "./help";
-
-const TILE = CANVAS.tile;
-const SPAWN_X = 80;
-const SPAWN_Y = 540;
 
 const INITIAL_LIVES = 3;
 const INITIAL_TIME = 300;
@@ -24,53 +23,59 @@ const BERRY_PER_LIFE = 100;
 const BERRY_SCORE = 10;
 const STOMP_SCORE = 100;
 
-type PlatformDef = { x: number; y: number; w: number; h: number };
-
-const PLATFORMS: PlatformDef[] = [
-  { x: 0, y: 640, w: 480, h: 80 },
-  { x: 640, y: 640, w: 480, h: 80 },
-  { x: 840, y: 480, w: 160, h: 24 },
-  { x: 1120, y: 560, w: 480, h: 160 },
-  { x: 1380, y: 380, w: 160, h: 24 },
-  { x: 1760, y: 640, w: 800, h: 80 },
-  { x: 2200, y: 480, w: 160, h: 24 },
-];
-
-const GOAL = { x: 2480, y: 520, w: TILE, h: 120 };
-const LEVEL_END_X = GOAL.x + GOAL.w + 80;
-const DEATH_PLANE_Y = 900;
+type PlayOpt = {
+  stage: StageId;
+  score?: number;
+  lives?: number;
+  berries?: number;
+};
 
 export function registerPlayScene(k: KCtx): void {
-  k.scene("play", (opt: { stage: StageId }) => {
+  k.scene("play", (opt: PlayOpt) => {
+    const level = getLevel(opt.stage);
+    if (!level) {
+      k.go("title");
+      return;
+    }
+
     k.setGravity(PHYSICS.gravity);
 
-    let score = 0;
-    let berries = 0;
-    let lives = INITIAL_LIVES;
+    let score = opt.score ?? 0;
+    let berries = opt.berries ?? 0;
+    let lives = opt.lives ?? INITIAL_LIVES;
     let timeLeft = INITIAL_TIME;
+    const currentCheckpoint = { x: level.spawn.x, y: level.spawn.y };
 
-    k.add([k.rect(LEVEL_END_X, k.height()), k.pos(0, 0), k.color(135, 206, 235)]);
+    k.add([
+      k.rect(level.width, level.height),
+      k.pos(0, 0),
+      k.color(level.theme.bg[0], level.theme.bg[1], level.theme.bg[2]),
+    ]);
 
-    for (const p of PLATFORMS) {
+    for (const p of level.platforms) {
       k.add([
         k.rect(p.w, p.h),
         k.pos(p.x, p.y),
-        k.color(80, 200, 100),
-        k.outline(2, k.rgb(40, 120, 60)),
+        k.color(level.theme.platform[0], level.theme.platform[1], level.theme.platform[2]),
+        k.outline(
+          2,
+          k.rgb(
+            level.theme.platformOutline[0],
+            level.theme.platformOutline[1],
+            level.theme.platformOutline[2],
+          ),
+        ),
         k.area(),
         k.body({ isStatic: true }),
         "ground",
       ]);
     }
 
-    k.add([
-      k.rect(GOAL.w, GOAL.h),
-      k.pos(GOAL.x, GOAL.y),
-      k.color(255, 100, 100),
-      k.outline(2, k.rgb(120, 30, 30)),
-      k.area(),
-      "goal",
-    ]);
+    addGoal(k, level.goal.x, level.goal.y);
+
+    for (const cp of level.checkpoints) {
+      addCheckpoint(k, cp.x, cp.y);
+    }
 
     const hud = createHud(k);
     hud.setScore(score);
@@ -78,13 +83,28 @@ export function registerPlayScene(k: KCtx): void {
     hud.setLives(lives);
     hud.setTime(timeLeft);
 
-    const resetCamera = () => {
-      k.setCamPos(k.width() / 2, k.height() / 2);
+    const updateCamera = () => {
+      const minCamX = k.width() / 2;
+      const maxCamX = Math.max(minCamX, level.width - k.width() / 2);
+      const desiredX = Math.max(minCamX, Math.min(currentCheckpoint.x, maxCamX));
+      const camY = level.verticalScroll
+        ? Math.max(k.height() / 2, Math.min(currentCheckpoint.y, level.height - k.height() / 2))
+        : k.height() / 2;
+      k.setCamPos(desiredX, camY);
     };
-    resetCamera();
+    updateCamera();
 
-    const player = addPlayer(k, SPAWN_X, SPAWN_Y, {
-      onReset: resetCamera,
+    const player = addPlayer(k, level.spawn.x, level.spawn.y, {
+      onReset: () => {
+        // カメラを現在のリスポーン位置にスナップ
+        const minCamX = k.width() / 2;
+        const maxCamX = Math.max(minCamX, level.width - k.width() / 2);
+        const camX = Math.max(minCamX, Math.min(currentCheckpoint.x, maxCamX));
+        const camY = level.verticalScroll
+          ? Math.max(k.height() / 2, Math.min(currentCheckpoint.y, level.height - k.height() / 2))
+          : k.height() / 2;
+        k.setCamPos(camX, camY);
+      },
       onLifeLost: () => {
         lives = Math.max(0, lives - 1);
         hud.setLives(lives);
@@ -92,6 +112,7 @@ export function registerPlayScene(k: KCtx): void {
           k.go("gameover", { reason: "died" });
         }
       },
+      getRespawnPos: () => currentCheckpoint,
       onSeedFire: (sx, sy, dir) => {
         addSeed(k, sx + dir * 24, sy, dir);
       },
@@ -113,25 +134,42 @@ export function registerPlayScene(k: KCtx): void {
       },
     });
 
-    addImomushi(k, 320, 638);
-    addImomushi(k, 900, 638);
-    addKobachi(k, 580, 470, 480, 700);
-    addDangomushi(k, 1300, 558);
-    addImomushi(k, 1900, 638);
-    addKobachi(k, 2050, 420, 1900, 2200);
-    addDangomushi(k, 2300, 638);
+    for (const e of level.enemies) {
+      switch (e.kind) {
+        case "imomushi":
+          addImomushi(k, e.x, e.y);
+          break;
+        case "dangomushi":
+          addDangomushi(k, e.x, e.y);
+          break;
+        case "kobachi":
+          addKobachi(k, e.x, e.y, e.leftBound, e.rightBound);
+          break;
+      }
+    }
 
-    addAcorn(k, 200, 600);
-    addBerry(k, 720, 600);
-    addBerry(k, 760, 600);
-    addBerry(k, 800, 600);
-    addLeaf(k, 920, 440);
-    addApple(k, 1300, 510);
-    addBerry(k, 1400, 340);
-    addBerry(k, 1440, 340);
-    addBerry(k, 1480, 340);
-    addSparkle(k, 2240, 440);
-    addGoldChick(k, 2400, 600);
+    for (const it of level.items) {
+      switch (it.kind) {
+        case "acorn":
+          addAcorn(k, it.x, it.y);
+          break;
+        case "apple":
+          addApple(k, it.x, it.y);
+          break;
+        case "leaf":
+          addLeaf(k, it.x, it.y);
+          break;
+        case "berry":
+          addBerry(k, it.x, it.y);
+          break;
+        case "sparkle":
+          addSparkle(k, it.x, it.y);
+          break;
+        case "gold-chick":
+          addGoldChick(k, it.x, it.y);
+          break;
+      }
+    }
 
     k.onCollide("seed", "enemy", (seed, enemy) => {
       enemy.trigger("stomped");
@@ -140,8 +178,26 @@ export function registerPlayScene(k: KCtx): void {
       hud.setScore(score);
     });
 
+    k.onCollide("player", "checkpoint", (_p, cp) => {
+      cp.trigger("activated");
+      const ext = cp as unknown as { cpX?: number; cpY?: number };
+      if (typeof ext.cpX === "number" && typeof ext.cpY === "number") {
+        currentCheckpoint.x = ext.cpX;
+        currentCheckpoint.y = ext.cpY;
+      }
+    });
+
     player.obj.onCollide("goal", () => {
-      k.go("gameover", { reason: "cleared" });
+      if (level.nextStage) {
+        k.go("play", {
+          stage: level.nextStage,
+          score,
+          lives,
+          berries,
+        });
+      } else {
+        k.go("gameover", { reason: "cleared" });
+      }
     });
 
     k.onUpdate(() => {
@@ -152,32 +208,39 @@ export function registerPlayScene(k: KCtx): void {
       if (timeLeft <= 0) {
         lives = Math.max(0, lives - 1);
         hud.setLives(lives);
-        timeLeft = INITIAL_TIME;
-        hud.setTime(timeLeft);
         if (lives === 0) {
           k.go("gameover", { reason: "timeup" });
           return;
         }
-        player.reset(SPAWN_X, SPAWN_Y);
+        timeLeft = INITIAL_TIME;
+        hud.setTime(timeLeft);
+        player.reset(currentCheckpoint.x, currentCheckpoint.y);
       }
 
-      if (player.obj.pos.y > DEATH_PLANE_Y) {
+      if (player.obj.pos.y > level.deathPlaneY) {
         lives = Math.max(0, lives - 1);
         hud.setLives(lives);
         if (lives === 0) {
           k.go("gameover", { reason: "died" });
           return;
         }
-        player.reset(SPAWN_X, SPAWN_Y);
+        player.reset(currentCheckpoint.x, currentCheckpoint.y);
         return;
       }
 
       const minCamX = k.width() / 2;
-      const maxCamX = LEVEL_END_X - k.width() / 2;
+      const maxCamX = Math.max(minCamX, level.width - k.width() / 2);
       const desiredX = Math.max(minCamX, Math.min(player.obj.pos.x, maxCamX));
       const currentX = k.camPos().x;
       const nextX = Math.max(currentX, desiredX);
-      k.setCamPos(nextX, k.height() / 2);
+
+      let nextY = k.height() / 2;
+      if (level.verticalScroll) {
+        const minCamY = k.height() / 2;
+        const maxCamY = Math.max(minCamY, level.height - k.height() / 2);
+        nextY = Math.max(minCamY, Math.min(player.obj.pos.y, maxCamY));
+      }
+      k.setCamPos(nextX, nextY);
     });
 
     k.add([

@@ -1,0 +1,52 @@
+import type { LevelData } from "./types";
+
+// 縦スクロール採用ステージ。下から上へ雲の足場で登っていく
+export const STAGE_1_4: LevelData = {
+  id: "1-4",
+  theme: {
+    bg: [180, 220, 255],
+    platform: [255, 255, 255],
+    platformOutline: [200, 200, 220],
+  },
+  width: 1280,
+  height: 1800,
+  spawn: { x: 80, y: 1700 },
+  deathPlaneY: 1900,
+  verticalScroll: true,
+  platforms: [
+    { x: 0, y: 1740, w: 1280, h: 60 },
+    { x: 200, y: 1620, w: 140, h: 24 },
+    { x: 480, y: 1500, w: 140, h: 24 },
+    { x: 760, y: 1380, w: 140, h: 24 },
+    { x: 1040, y: 1260, w: 140, h: 24 },
+    { x: 760, y: 1140, w: 140, h: 24 },
+    { x: 480, y: 1020, w: 140, h: 24 },
+    { x: 200, y: 900, w: 140, h: 24 },
+    { x: 480, y: 780, w: 140, h: 24 },
+    { x: 760, y: 660, w: 140, h: 24 },
+    { x: 480, y: 540, w: 140, h: 24 },
+    { x: 760, y: 420, w: 140, h: 24 },
+    { x: 1040, y: 300, w: 140, h: 24 },
+    { x: 200, y: 180, w: 1080, h: 24 },
+  ],
+  enemies: [
+    { kind: "kobachi", x: 600, y: 1450, leftBound: 400, rightBound: 800 },
+    { kind: "kobachi", x: 600, y: 1100, leftBound: 400, rightBound: 800 },
+    { kind: "kobachi", x: 700, y: 700, leftBound: 500, rightBound: 900 },
+    { kind: "kobachi", x: 700, y: 360, leftBound: 500, rightBound: 900 },
+  ],
+  items: [
+    { kind: "acorn", x: 240, y: 1580 },
+    { kind: "leaf", x: 520, y: 1460 },
+    { kind: "berry", x: 800, y: 1340 },
+    { kind: "berry", x: 1080, y: 1220 },
+    { kind: "apple", x: 800, y: 1100 },
+    { kind: "leaf", x: 240, y: 860 },
+    { kind: "berry", x: 520, y: 740 },
+    { kind: "sparkle", x: 800, y: 380 },
+    { kind: "gold-chick", x: 1100, y: 260 },
+  ],
+  checkpoints: [{ x: 800, y: 1140 }],
+  goal: { x: 660, y: 178 },
+  nextStage: null,
+};

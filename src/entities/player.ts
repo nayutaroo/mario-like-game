@@ -10,6 +10,9 @@ const SEED_COOLDOWN = 0.3;
 const LEAF_DURATION = 4.0;
 const LEAF_MAX_FALL = 120;
 const SPARKLE_DURATION = 8.0;
+const DYING_DURATION = 0.9;
+const DYING_POP_VEL = 650;
+const DYING_COLOR: [number, number, number] = [220, 60, 60];
 
 type EnemyLike = {
   pos: { x: number; y: number };
@@ -30,6 +33,8 @@ export type PlayerCallbacks = {
   onSeedFire?: (x: number, y: number, dir: -1 | 1) => void;
   onLifeUp?: () => void;
   onBerryCollect?: () => void;
+  // play.ts が「現在のリスポーン位置」(チェックポイント or スポーン) を返す
+  getRespawnPos?: () => { x: number; y: number };
 };
 
 export function addPlayer(
@@ -65,8 +70,11 @@ export function addPlayer(
   let sparkleTimer = 0;
   let leafTimer = 0;
   let seedCooldown = 0;
+  let dyingTimer = 0;
   let facing: -1 | 1 = 1;
   let paused = false;
+
+  const isLocked = () => paused || dyingTimer > 0;
 
   const updateFormVisual = () => {
     const [r, g, b] = FORM_COLORS[state.form()];
@@ -83,6 +91,7 @@ export function addPlayer(
     sparkleTimer = 0;
     leafTimer = 0;
     seedCooldown = 0;
+    dyingTimer = 0;
     obj.opacity = 1;
     state.reset();
     updateFormVisual();
@@ -90,11 +99,16 @@ export function addPlayer(
   };
 
   const damage = (): boolean => {
-    if (invincibleTimer > 0 || sparkleTimer > 0) return false;
+    if (invincibleTimer > 0 || sparkleTimer > 0 || dyingTimer > 0) return false;
     const outcome = state.apply("DAMAGE");
     if (outcome === "died") {
       callbacks.onLifeLost?.();
-      reset();
+      dyingTimer = DYING_DURATION;
+      obj.vel = k.vec2(0, -DYING_POP_VEL);
+      obj.color = k.rgb(DYING_COLOR[0], DYING_COLOR[1], DYING_COLOR[2]);
+      jumpBufferTimer = 0;
+      coyoteTimer = 0;
+      isJumpHeld = false;
       return true;
     }
     invincibleTimer = PHYSICS.invincibleTime;
@@ -135,6 +149,18 @@ export function addPlayer(
 
   k.onUpdate(() => {
     const dt = k.dt();
+
+    if (dyingTimer > 0) {
+      dyingTimer = Math.max(0, dyingTimer - dt);
+      const blink = Math.floor(dyingTimer * 18) % 2 === 0;
+      obj.opacity = blink ? 0.3 : 1;
+      if (dyingTimer === 0) {
+        const pos = callbacks.getRespawnPos?.();
+        if (pos) reset(pos.x, pos.y);
+        else reset();
+      }
+      return;
+    }
 
     if (invincibleTimer > 0) {
       invincibleTimer = Math.max(0, invincibleTimer - dt);
@@ -199,23 +225,22 @@ export function addPlayer(
       const change = Math.sign(diff) * Math.min(Math.abs(diff), accel * dt);
       obj.vel.x += change;
     } else if (onGround && obj.vel.x !== 0) {
-      const change =
-        Math.sign(obj.vel.x) * Math.min(Math.abs(obj.vel.x), PHYSICS.groundDecel * dt);
+      const change = Math.sign(obj.vel.x) * Math.min(Math.abs(obj.vel.x), PHYSICS.groundDecel * dt);
       obj.vel.x -= change;
     }
   });
 
   k.onKeyPress("space", () => {
-    if (paused) return;
+    if (isLocked()) return;
     jumpBufferTimer = PHYSICS.jumpBufferTime;
   });
   k.onKeyPress("k", () => {
-    if (paused) return;
+    if (isLocked()) return;
     jumpBufferTimer = PHYSICS.jumpBufferTime;
   });
 
   const releaseJump = () => {
-    if (paused) return;
+    if (isLocked()) return;
     if (isJumpHeld && obj.vel.y < 0) obj.vel.y *= PHYSICS.jumpReleaseCut;
     isJumpHeld = false;
   };
@@ -223,7 +248,7 @@ export function addPlayer(
   k.onKeyRelease("k", releaseJump);
 
   k.onKeyPress("z", () => {
-    if (paused) return;
+    if (isLocked()) return;
     if (state.form() !== "apple") return;
     if (seedCooldown > 0) return;
     callbacks.onSeedFire?.(obj.pos.x, obj.pos.y - PLAYER_HEIGHT / 2, facing);
@@ -231,7 +256,7 @@ export function addPlayer(
   });
 
   const handleEnemyContact = (enemy: unknown, isInitial: boolean) => {
-    if (paused) return;
+    if (isLocked()) return;
     const e = enemy as EnemyLike;
 
     if (sparkleTimer > 0) {
@@ -268,7 +293,7 @@ export function addPlayer(
   });
 
   k.onCollide("player", "item", (_p, item) => {
-    if (paused) return;
+    if (isLocked()) return;
     const kind = (item as { kind?: ItemKind }).kind;
     if (kind) takeItem(kind);
     item.destroy();
