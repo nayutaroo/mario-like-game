@@ -47,10 +47,13 @@ function makeButton(k: KCtx, spec: ButtonSpec) {
     obj.opacity = IDLE_OPACITY;
   };
 
-  obj.onMousePress(press);
-  obj.onMouseRelease(release);
-  // 指がボタン外に出た時に解放されないと押しっぱなしになるので、グローバル release も拾う
-  // （シングルタッチ前提のフォールバック）
+  // kaplay の obj.onMousePress / onMouseRelease は実体がグローバルハンドラなので、
+  // 「このボタン上で押された場合のみ」を検知するには isHovering() でフィルタする必要がある。
+  k.onMousePress(() => {
+    if (obj.isHovering()) press();
+  });
+  // 解放はマウスを離した瞬間どこにいても発火させる（指をボタン外にスワイプしても押しっぱなしにならないように）
+  k.onMouseRelease(release);
 
   return { obj, release };
 }

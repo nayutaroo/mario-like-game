@@ -29,7 +29,7 @@ export function registerTitleScene(k: KCtx): void {
       k.anchor("center"),
       k.color(255, 255, 255),
     ]);
-    startBtn.onMousePress(startGame);
+    startBtn.onClick(startGame);
 
     // タップ可能なヘルプボタン
     const helpBtn = k.add([
@@ -46,7 +46,7 @@ export function registerTitleScene(k: KCtx): void {
       k.anchor("center"),
       k.color(255, 255, 255),
     ]);
-    helpBtn.onMousePress(openHelp);
+    helpBtn.onClick(openHelp);
 
     k.add([
       k.text("v0.0.2 — M2", { size: 18 }),
