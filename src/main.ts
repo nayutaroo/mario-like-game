@@ -1,6 +1,7 @@
 import kaplay from "kaplay";
 import { CANVAS } from "./config";
 import { registerGameoverScene } from "./scenes/gameover";
+import { registerHelpScene } from "./scenes/help";
 import { registerPlayScene } from "./scenes/play";
 import { registerTitleScene } from "./scenes/title";
 
@@ -17,5 +18,6 @@ const k = kaplay({
 registerTitleScene(k);
 registerPlayScene(k);
 registerGameoverScene(k);
+registerHelpScene(k);
 
 k.go("title");

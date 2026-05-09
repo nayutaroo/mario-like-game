@@ -19,17 +19,22 @@ export function registerTitleScene(k: KCtx): void {
     ]);
 
     k.add([
-      k.text("v0.0.1 — Walking Skeleton (M0)", { size: 18 }),
+      k.text("H : そうさせつめい", { size: 22 }),
+      k.pos(k.width() / 2, k.height() / 2 + 100),
+      k.anchor("center"),
+      k.color(180, 200, 230),
+    ]);
+
+    k.add([
+      k.text("v0.0.1 — Walking Skeleton (M1)", { size: 18 }),
       k.pos(k.width() / 2, k.height() - 30),
       k.anchor("center"),
       k.color(140, 140, 140),
     ]);
 
-    k.onKeyPress("enter", () => {
-      k.go("play", { stage: "1-1" });
-    });
-    k.onKeyPress("space", () => {
-      k.go("play", { stage: "1-1" });
-    });
+    const startGame = () => k.go("play", { stage: "1-1" });
+    k.onKeyPress("enter", startGame);
+    k.onKeyPress("space", startGame);
+    k.onKeyPress("h", () => k.go("help"));
   });
 }

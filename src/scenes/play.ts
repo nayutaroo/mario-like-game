@@ -1,6 +1,7 @@
 import { CANVAS, PHYSICS } from "../config";
 import { addPlayer } from "../entities/player";
 import type { KCtx, StageId } from "../types";
+import { buildHelpOverlay } from "./help";
 
 const TILE = CANVAS.tile;
 const SPAWN_X = 80;
@@ -69,15 +70,30 @@ export function registerPlayScene(k: KCtx): void {
     });
 
     k.add([
-      k.text(`Stage: ${opt.stage}  ←/→ or A/D move  Shift dash  Space jump  Esc title`, {
-        size: 18,
-      }),
+      k.text(`Stage: ${opt.stage}    H: ヘルプ    Esc: タイトル`, { size: 18 }),
       k.pos(20, 20),
       k.color(255, 255, 255),
       k.fixed(),
     ]);
 
+    let helpObjs: ReturnType<KCtx["add"]>[] = [];
+    const closeHelp = () => {
+      for (const o of helpObjs) o.destroy();
+      helpObjs = [];
+    };
+    const openHelp = () => {
+      helpObjs = buildHelpOverlay(k);
+    };
+    k.onKeyPress("h", () => {
+      if (helpObjs.length > 0) {
+        closeHelp();
+      } else {
+        openHelp();
+      }
+    });
+
     k.onKeyPress("escape", () => {
+      closeHelp();
       k.go("title");
     });
   });
