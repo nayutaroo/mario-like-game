@@ -47,5 +47,11 @@ export const STAGE_1_2: LevelData = {
   ],
   checkpoints: [{ x: 1180, y: 638 }],
   goal: { x: 2820, y: 638 },
+  mysteryBlocks: [
+    // 序盤、最初の段差の前に発見ボーナス
+    { x: 360, y: 540, content: { type: "item", kind: "berry" } },
+    // 中盤、空中の隠しブロック → きらきら花
+    { x: 1300, y: 460, content: { type: "item", kind: "sparkle" } },
+  ],
   nextStage: "1-3",
 };

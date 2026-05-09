@@ -31,8 +31,6 @@ export const STAGE_1_1: LevelData = {
     { kind: "dangomushi", x: 2300, y: 638 },
   ],
   items: [
-    // 挙動確認用: スタート地点付近にリンゴ（種発射の向きをすぐ試せるように）
-    { kind: "apple", x: 140, y: 600 },
     { kind: "acorn", x: 200, y: 600 },
     { kind: "berry", x: 720, y: 600 },
     { kind: "berry", x: 760, y: 600 },
@@ -47,5 +45,11 @@ export const STAGE_1_1: LevelData = {
   ],
   checkpoints: [{ x: 1340, y: 558 }],
   goal: { x: 2496, y: 638 },
+  mysteryBlocks: [
+    // 序盤の穴の上空に、叩くとベリーが出るブロック
+    { x: 540, y: 480, content: { type: "item", kind: "berry" } },
+    // 中盤の段差近くに隠しブロック → ボーナス面ワープ
+    { x: 1700, y: 460, content: { type: "warp", target: "bonus-1", returnTo: "1-2" } },
+  ],
   nextStage: "1-2",
 };

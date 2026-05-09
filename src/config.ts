@@ -14,7 +14,7 @@ export const PHYSICS = {
   groundDecel: 1500,
   airDecel: 600,
 
-  jumpVel: 620,
+  jumpVel: 870,
   jumpReleaseCut: 0.4,
   jumpBufferTime: 0.1,
   coyoteTime: 0.08,

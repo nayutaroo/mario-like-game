@@ -48,5 +48,11 @@ export const STAGE_1_4: LevelData = {
   ],
   checkpoints: [{ x: 800, y: 1140 }],
   goal: { x: 660, y: 178 },
+  mysteryBlocks: [
+    // 中段の足場下に隠しブロック → ドングリ
+    { x: 600, y: 1280, content: { type: "item", kind: "acorn" } },
+    // 上段直前に金のヒナ（高難度ボーナス）
+    { x: 320, y: 600, content: { type: "item", kind: "gold-chick" } },
+  ],
   nextStage: "1-5",
 };

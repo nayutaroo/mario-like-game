@@ -12,8 +12,11 @@ import { addGoldChick } from "../entities/items/gold-chick";
 import { addLeaf } from "../entities/items/leaf";
 import { addSeed } from "../entities/items/seed";
 import { addSparkle } from "../entities/items/sparkle";
+import { addMysteryBlock } from "../entities/mystery-block";
 import { addPlayer } from "../entities/player";
+import { addWarp } from "../entities/warp";
 import { getLevel } from "../levels";
+import type { MysteryContent } from "../levels/types";
 import { createHud } from "../systems/hud";
 import type { KCtx, StageId } from "../types";
 import { buildHelpOverlay } from "./help";
@@ -29,6 +32,8 @@ type PlayOpt = {
   score?: number;
   lives?: number;
   berries?: number;
+  // ボーナス面から戻る時の遷移先
+  returnTo?: StageId;
 };
 
 export function registerPlayScene(k: KCtx): void {
@@ -78,6 +83,46 @@ export function registerPlayScene(k: KCtx): void {
 
     for (const cp of level.checkpoints) {
       addCheckpoint(k, cp.x, cp.y);
+    }
+
+    if (level.warps) {
+      for (const w of level.warps) {
+        addWarp(k, w.x, w.y, w.target, w.returnTo);
+      }
+    }
+
+    const emitMysteryContent = (content: MysteryContent, cx: number, cy: number) => {
+      if (content.type === "warp") {
+        addWarp(k, cx, cy, content.target, content.returnTo);
+        return;
+      }
+      // type === "item"
+      switch (content.kind) {
+        case "acorn":
+          addAcorn(k, cx, cy);
+          return;
+        case "apple":
+          addApple(k, cx, cy);
+          return;
+        case "leaf":
+          addLeaf(k, cx, cy);
+          return;
+        case "berry":
+          addBerry(k, cx, cy);
+          return;
+        case "sparkle":
+          addSparkle(k, cx, cy);
+          return;
+        case "gold-chick":
+          addGoldChick(k, cx, cy);
+          return;
+      }
+    };
+
+    if (level.mysteryBlocks) {
+      for (const mb of level.mysteryBlocks) {
+        addMysteryBlock(k, mb.x, mb.y, (cx, cy) => emitMysteryContent(mb.content, cx, cy));
+      }
     }
 
     const spawnEnemies = () => {
@@ -237,6 +282,16 @@ export function registerPlayScene(k: KCtx): void {
     });
 
     player.obj.onCollide("goal", () => {
+      // ボーナス面から戻る場合、opt.returnTo を優先
+      if (opt.returnTo) {
+        k.go("play", {
+          stage: opt.returnTo,
+          score,
+          lives,
+          berries,
+        });
+        return;
+      }
       if (level.nextStage) {
         k.go("play", {
           stage: level.nextStage,
@@ -247,6 +302,18 @@ export function registerPlayScene(k: KCtx): void {
       } else {
         k.go("gameover", { reason: "cleared" });
       }
+    });
+
+    k.onCollide("player", "warp", (_p, warp) => {
+      const ext = warp as unknown as { warpTarget?: StageId; warpReturnTo?: StageId };
+      if (!ext.warpTarget) return;
+      k.go("play", {
+        stage: ext.warpTarget,
+        score,
+        lives,
+        berries,
+        returnTo: ext.warpReturnTo,
+      });
     });
 
     k.onUpdate(() => {

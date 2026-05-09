@@ -13,6 +13,23 @@ export type ItemDef = {
   y: number;
 };
 
+export type WarpDef = {
+  x: number;
+  y: number;
+  target: StageId;
+  returnTo?: StageId;
+};
+
+export type MysteryContent =
+  | { type: "item"; kind: ItemKind }
+  | { type: "warp"; target: StageId; returnTo?: StageId };
+
+export type MysteryBlockDef = {
+  x: number;
+  y: number;
+  content: MysteryContent;
+};
+
 export type LevelTheme = {
   bg: [number, number, number];
   platform: [number, number, number];
@@ -33,5 +50,7 @@ export type LevelData = {
   checkpoints: { x: number; y: number }[];
   goal?: { x: number; y: number };
   boss?: { x: number; y: number };
+  warps?: WarpDef[];
+  mysteryBlocks?: MysteryBlockDef[];
   nextStage: StageId | null;
 };

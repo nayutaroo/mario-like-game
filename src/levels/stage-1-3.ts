@@ -52,5 +52,11 @@ export const STAGE_1_3: LevelData = {
   ],
   checkpoints: [{ x: 1620, y: 638 }],
   goal: { x: 2820, y: 638 },
+  mysteryBlocks: [
+    // 洞窟序盤、天井の下に隠しブロック → ベリー
+    { x: 380, y: 540, content: { type: "item", kind: "berry" } },
+    // 中盤、上段プラットフォーム手前に隠しブロック → ボーナス面ワープ
+    { x: 2200, y: 540, content: { type: "warp", target: "bonus-1", returnTo: "1-4" } },
+  ],
   nextStage: "1-4",
 };
