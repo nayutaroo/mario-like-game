@@ -11,19 +11,42 @@ export function registerTitleScene(k: KCtx): void {
       k.color(255, 240, 120),
     ]);
 
-    k.add([
-      k.text("Press Enter / Space to Start", { size: 28 }),
+    const startGame = () => k.go("play", { stage: "1-1" });
+    const openHelp = () => k.go("help");
+
+    // タップ可能な START ボタン（キーボード操作と並行）
+    const startBtn = k.add([
+      k.rect(560, 64, { radius: 14 }),
       k.pos(k.width() / 2, 380),
       k.anchor("center"),
-      k.color(220, 220, 220),
+      k.color(60, 100, 160),
+      k.outline(2, k.rgb(140, 180, 220)),
+      k.opacity(0.7),
+      k.area(),
     ]);
-
-    k.add([
-      k.text("H : そうさせつめい", { size: 22 }),
-      k.pos(k.width() / 2, 440),
+    startBtn.add([
+      k.text("▶ TAP / Enter / Space to Start", { size: 24 }),
       k.anchor("center"),
-      k.color(180, 200, 230),
+      k.color(255, 255, 255),
     ]);
+    startBtn.onMousePress(startGame);
+
+    // タップ可能なヘルプボタン
+    const helpBtn = k.add([
+      k.rect(360, 48, { radius: 12 }),
+      k.pos(k.width() / 2, 460),
+      k.anchor("center"),
+      k.color(60, 80, 110),
+      k.outline(2, k.rgb(140, 180, 220)),
+      k.opacity(0.55),
+      k.area(),
+    ]);
+    helpBtn.add([
+      k.text("H : そうさせつめい", { size: 22 }),
+      k.anchor("center"),
+      k.color(255, 255, 255),
+    ]);
+    helpBtn.onMousePress(openHelp);
 
     k.add([
       k.text("v0.0.2 — M2", { size: 18 }),
@@ -32,9 +55,8 @@ export function registerTitleScene(k: KCtx): void {
       k.color(140, 140, 140),
     ]);
 
-    const startGame = () => k.go("play", { stage: "1-1" });
     k.onKeyPress("enter", startGame);
     k.onKeyPress("space", startGame);
-    k.onKeyPress("h", () => k.go("help"));
+    k.onKeyPress("h", openHelp);
   });
 }

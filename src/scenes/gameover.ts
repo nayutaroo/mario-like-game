@@ -18,17 +18,25 @@ export function registerGameoverScene(k: KCtx): void {
     ]);
 
     k.add([
-      k.text("Press Enter to return to title", { size: 28 }),
+      k.text("Press Enter / Tap to return to title", { size: 26 }),
       k.pos(k.width() / 2, k.height() / 2 + 40),
       k.anchor("center"),
       k.color(220, 220, 220),
     ]);
 
-    k.onKeyPress("enter", () => {
+    let initialFrameSkipped = false;
+    const goTitle = () => {
+      if (!initialFrameSkipped) {
+        initialFrameSkipped = true;
+        return;
+      }
       k.go("title");
+    };
+    k.onUpdate(() => {
+      initialFrameSkipped = true;
     });
-    k.onKeyPress("space", () => {
-      k.go("title");
-    });
+    k.onKeyPress("enter", goTitle);
+    k.onKeyPress("space", goTitle);
+    k.onMousePress(goTitle);
   });
 }

@@ -59,13 +59,15 @@ export function registerHelpScene(k: KCtx): void {
     ]);
 
     let initialFrameSkipped = false;
-    k.onKeyPress(() => {
+    const goBack = () => {
       if (!initialFrameSkipped) {
         initialFrameSkipped = true;
         return;
       }
       k.go("title");
-    });
+    };
+    k.onKeyPress(goBack);
+    k.onMousePress(goBack);
     k.onUpdate(() => {
       initialFrameSkipped = true;
     });
