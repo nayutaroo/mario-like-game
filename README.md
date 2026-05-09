@@ -5,9 +5,9 @@ Web ブラウザで動くマリオ風 2D 横スクロールアクションゲー
 
 ## 🎮 遊ぶ
 
-**[https://nayutaroo.github.io/mario-like-game/](https://nayutaroo.github.io/mario-like-game/)**
+▶ **[https://nayutaroo.github.io/mario-like-game/](https://nayutaroo.github.io/mario-like-game/)**
 
-PC のキーボード操作（モバイル / タッチ未対応）。Chrome / Firefox / Safari / Edge の最新版で動作。
+PC キーボード操作。タッチデバイス（スマホ／タブレット）ではオンスクリーンボタンが自動表示されます。Chrome / Firefox / Safari / Edge の最新版で動作。
 
 ## 🕹️ 操作
 
