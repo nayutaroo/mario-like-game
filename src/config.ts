@@ -5,7 +5,7 @@ export const CANVAS = {
 } as const;
 
 export const PHYSICS = {
-  gravity: 1800,
+  gravity: 2400,
 
   walkSpeed: 180,
   dashSpeed: 320,
@@ -14,7 +14,7 @@ export const PHYSICS = {
   groundDecel: 1500,
   airDecel: 600,
 
-  jumpVel: 870,
+  jumpVel: 950,
   jumpReleaseCut: 0.4,
   jumpBufferTime: 0.1,
   coyoteTime: 0.08,
