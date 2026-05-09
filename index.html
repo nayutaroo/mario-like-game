@@ -23,8 +23,10 @@
       }
       #game canvas {
         display: block;
-        image-rendering: pixelated;
-        image-rendering: crisp-edges;
+        /* image-rendering は pixelated にすると DPR 違いの環境で逆にジャギって
+           見えるので auto (smooth) を採用。kaplay 側で pixelDensity を上げて
+           解像度を担保する */
+        image-rendering: auto;
       }
     </style>
   </head>
