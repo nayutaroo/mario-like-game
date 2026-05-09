@@ -21,6 +21,9 @@ export const STAGE_1_1: LevelData = {
     { x: 1760, y: 640, w: 800, h: 80 },
     { x: 2200, y: 480, w: 160, h: 24 },
   ],
+  // 試験的に 1 つだけ配置: 下から飛び抜けられて、上からは足場として使える
+  // スタート右のイモムシ上空に置くことで「敵を躱す高台」「通り抜け確認」の両方を体験できる
+  semiSolids: [{ x: 320, y: 540, w: 100, h: 12, variant: "grass" }],
   enemies: [
     { kind: "imomushi", x: 320, y: 638 },
     { kind: "imomushi", x: 900, y: 638 },

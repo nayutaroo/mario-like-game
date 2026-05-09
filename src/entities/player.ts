@@ -93,6 +93,9 @@ export function addPlayer(
   let dyingTimer = 0;
   let facing: -1 | 1 = 1;
   let paused = false;
+  // すり抜け足場の着地判定: 直前フレームの底辺 y を保持
+  // (前フレームに板の上 → 今フレームで重なる かつ vel.y >= 0 なら snap)
+  let prevBottomY = spawnY;
 
   const isLocked = () => paused || dyingTimer > 0;
 
@@ -112,6 +115,7 @@ export function addPlayer(
     leafTimer = 0;
     seedCooldown = 0;
     dyingTimer = 0;
+    prevBottomY = ry;
     obj.opacity = 1;
     state.reset();
     updateFormVisual();
@@ -215,7 +219,28 @@ export function addPlayer(
 
     if (paused) return;
 
-    const onGround = obj.isGrounded();
+    // すり抜け足場 (one-way platform) の着地判定
+    // kaplay の body() は one-way 衝突を持たないため、area() のみの semi-solid を
+    // ここで自前にチェックして「前フレームの底辺が板の上 → 今フレームで重なる
+    // かつ降下中 (vel.y >= 0)」のときだけ板の上にスナップする
+    let onSemiSolidThisFrame = false;
+    {
+      const playerLeft = obj.pos.x - PLAYER_WIDTH / 2;
+      const playerRight = obj.pos.x + PLAYER_WIDTH / 2;
+      for (const ss of k.get("semi-solid")) {
+        const ssTop = ss.pos.y;
+        const ssLeft = ss.pos.x;
+        const ssRight = ss.pos.x + (ss as unknown as { width: number }).width;
+        if (playerRight < ssLeft || playerLeft > ssRight) continue;
+        if (obj.vel.y >= 0 && prevBottomY <= ssTop && obj.pos.y >= ssTop) {
+          obj.pos.y = ssTop;
+          obj.vel.y = 0;
+          onSemiSolidThisFrame = true;
+        }
+      }
+    }
+
+    const onGround = obj.isGrounded() || onSemiSolidThisFrame;
 
     if (onGround) coyoteTimer = PHYSICS.coyoteTime;
     else if (coyoteTimer > 0) coyoteTimer = Math.max(0, coyoteTimer - dt);
@@ -266,6 +291,9 @@ export function addPlayer(
       const change = Math.sign(obj.vel.x) * Math.min(Math.abs(obj.vel.x), PHYSICS.groundDecel * dt);
       obj.vel.x -= change;
     }
+
+    // 次フレームのすり抜け足場判定で使うため、現フレームの底辺 y を記録
+    prevBottomY = obj.pos.y;
   });
 
   k.onKeyPress("space", () => {

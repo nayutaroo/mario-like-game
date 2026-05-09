@@ -131,6 +131,7 @@
 - ステージ遷移: ゴール接触で `k.go("play", { stage: nextStage, score, lives, berries })` で持ち越し。`nextStage: null` のステージ (1-4) クリアでクリア画面に遷移（M5 でボス面が入ったら更新）
 - 1-1 中盤の浮島がジャンプで届かない問題 → 当初は段差を縮める方向で考えたが「全体的に低くなりすぎる」となり方針転換。`PHYSICS.jumpVel` を 620 → 870 に引き上げ（最高点 ~106 px → ~210 px）、足場配置はオリジナルに戻した。設計ルールは `docs/specification/level-design.md` の「配置の指針」に「段差は 180 px 以内」として明記
 - 870 設定後「滞空時間が長くて操作の自由が下がる／高すぎて空中の敵・足場に当たる」フィードバックあり → `gravity 1800 → 2400`、`jumpVel 870 → 950` に再調整。最高点 ~188 px（180 px ルールは維持、余裕は 8 px に縮小）、ピーク到達 0.48 s → 0.40 s で滞空時間を約 18% 短縮
+- すり抜け足場（one-way / semi-solid）を導入: `src/entities/semi-solid.ts` + `LevelData.semiSolids?: SemiSolidDef[]`。kaplay の body には one-way フラグが無いため、player.ts に `prevBottomY` を保持して「前フレームに板の上 → 今フレームで重なる かつ vel.y ≥ 0」のときだけ snap する自前接地を追加。仕様は `docs/specification/mechanics.md` の「すり抜け足場」セクション参照。1-1 に試験投入 1 個 (`grass` バリアント、x=320)
 
 ### M5 — ボス面（1-5）✅
 
