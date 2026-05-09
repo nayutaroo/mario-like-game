@@ -31,6 +31,7 @@ export type LevelData = {
   enemies: EnemyDef[];
   items: ItemDef[];
   checkpoints: { x: number; y: number }[];
-  goal: { x: number; y: number };
+  goal?: { x: number; y: number };
+  boss?: { x: number; y: number };
   nextStage: StageId | null;
 };

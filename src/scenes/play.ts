@@ -1,5 +1,6 @@
-import { PHYSICS } from "../config";
+import { EMOJI_FONT, PHYSICS } from "../config";
 import { addCheckpoint } from "../entities/checkpoint";
+import { addBoss } from "../entities/enemies/boss";
 import { addDangomushi } from "../entities/enemies/dangomushi";
 import { addImomushi } from "../entities/enemies/imomushi";
 import { addKobachi } from "../entities/enemies/kobachi";
@@ -71,11 +72,34 @@ export function registerPlayScene(k: KCtx): void {
       ]);
     }
 
-    addGoal(k, level.goal.x, level.goal.y);
+    if (level.goal) {
+      addGoal(k, level.goal.x, level.goal.y);
+    }
 
     for (const cp of level.checkpoints) {
       addCheckpoint(k, cp.x, cp.y);
     }
+
+    const spawnEnemies = () => {
+      for (const e of level.enemies) {
+        switch (e.kind) {
+          case "imomushi":
+            addImomushi(k, e.x, e.y);
+            break;
+          case "dangomushi":
+            addDangomushi(k, e.x, e.y);
+            break;
+          case "kobachi":
+            addKobachi(k, e.x, e.y, e.leftBound, e.rightBound);
+            break;
+        }
+      }
+    };
+
+    const respawnEnemies = () => {
+      for (const e of k.get("enemy")) e.destroy();
+      spawnEnemies();
+    };
 
     const hud = createHud(k);
     hud.setScore(score);
@@ -104,6 +128,8 @@ export function registerPlayScene(k: KCtx): void {
           ? Math.max(k.height() / 2, Math.min(currentCheckpoint.y, level.height - k.height() / 2))
           : k.height() / 2;
         k.setCamPos(camX, camY);
+        // 残機が減ってリスポーンする際は敵を初期配置に戻す（アイテムは引き継ぎ）
+        respawnEnemies();
       },
       onLifeLost: () => {
         lives = Math.max(0, lives - 1);
@@ -134,19 +160,38 @@ export function registerPlayScene(k: KCtx): void {
       },
     });
 
-    for (const e of level.enemies) {
-      switch (e.kind) {
-        case "imomushi":
-          addImomushi(k, e.x, e.y);
-          break;
-        case "dangomushi":
-          addDangomushi(k, e.x, e.y);
-          break;
-        case "kobachi":
-          addKobachi(k, e.x, e.y, e.leftBound, e.rightBound);
-          break;
-      }
-    }
+    spawnEnemies();
+
+    const setupBoss = () => {
+      if (!level.boss) return;
+      const boss = addBoss(k, level.boss.x, level.boss.y);
+      const renderHearts = (hp: number, max: number) =>
+        "❤️".repeat(Math.max(0, hp)) + "🖤".repeat(Math.max(0, max - hp));
+      const bossHpText = k.add([
+        k.text(`BOSS ${renderHearts(boss.getHp(), boss.getMaxHp())}`, {
+          size: 22,
+          font: EMOJI_FONT,
+        }),
+        k.pos(k.width() / 2, 24),
+        k.anchor("center"),
+        k.color(255, 220, 220),
+        k.fixed(),
+        k.z(60),
+      ]);
+      boss.obj.on("damaged", (hp: number) => {
+        bossHpText.text = `BOSS ${renderHearts(hp, boss.getMaxHp())}`;
+      });
+      boss.obj.on("defeated", () => {
+        score += 1000;
+        hud.setScore(score);
+        bossHpText.text = "BOSS DEFEATED!";
+        bossHpText.color = k.rgb(255, 240, 120);
+        k.wait(1.5, () => {
+          k.go("gameover", { reason: "cleared" });
+        });
+      });
+    };
+    setupBoss();
 
     for (const it of level.items) {
       switch (it.kind) {
@@ -172,10 +217,14 @@ export function registerPlayScene(k: KCtx): void {
     }
 
     k.onCollide("seed", "enemy", (seed, enemy) => {
-      enemy.trigger("stomped");
       seed.destroy();
-      score += STOMP_SCORE;
-      hud.setScore(score);
+      if (enemy.is("boss")) {
+        enemy.trigger("seed-hit");
+      } else {
+        enemy.trigger("stomped");
+        score += STOMP_SCORE;
+        hud.setScore(score);
+      }
     });
 
     k.onCollide("player", "checkpoint", (_p, cp) => {

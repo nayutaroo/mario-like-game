@@ -48,5 +48,5 @@ export const STAGE_1_4: LevelData = {
   ],
   checkpoints: [{ x: 800, y: 1140 }],
   goal: { x: 660, y: 178 },
-  nextStage: null,
+  nextStage: "1-5",
 };

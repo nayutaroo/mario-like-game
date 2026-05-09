@@ -5,6 +5,12 @@ import type { ItemKind, KCtx, PlayerForm } from "../types";
 const PLAYER_WIDTH = 36;
 const PLAYER_HEIGHT = 44;
 const STOMP_BOUNCE = 360;
+// 踏みつけ判定の高さマージン: 横並びで pos.y がほぼ同値の場合に
+// stomp 判定が暴発しないよう、敵の上に少なくともこの px 分プレイヤーが居ないと踏みとみなさない
+const STOMP_HEIGHT_MARGIN = 12;
+// 向きマーカー（くちばし）配置: プレイヤー矩形の外側、上半分
+const FACING_MARKER_OFFSET_X = PLAYER_WIDTH / 2 + 3;
+const FACING_MARKER_Y = -PLAYER_HEIGHT * 0.55;
 
 const SEED_COOLDOWN = 0.3;
 const LEAF_DURATION = 4.0;
@@ -59,6 +65,14 @@ export function addPlayer(
     k.text("🐤", { size: 32, font: EMOJI_FONT }),
     k.anchor("center"),
     k.pos(0, -PLAYER_HEIGHT / 2),
+  ]);
+
+  const facingMarker = obj.add([
+    k.rect(5, 8),
+    k.color(255, 130, 60),
+    k.outline(1, k.rgb(120, 50, 0)),
+    k.anchor("center"),
+    k.pos(FACING_MARKER_OFFSET_X, FACING_MARKER_Y),
   ]);
 
   const state = createPyoState();
@@ -216,6 +230,7 @@ export function addPlayer(
     const dir = (right ? 1 : 0) + (left ? -1 : 0);
     if (dir === 1) facing = 1;
     else if (dir === -1) facing = -1;
+    facingMarker.pos.x = facing * FACING_MARKER_OFFSET_X;
 
     const targetSpeed = dir * (dash ? PHYSICS.dashSpeed : PHYSICS.walkSpeed);
     const accel = onGround ? PHYSICS.groundAccel : PHYSICS.airAccel;
@@ -264,7 +279,7 @@ export function addPlayer(
       return;
     }
 
-    if (obj.pos.y < e.pos.y) {
+    if (obj.pos.y < e.pos.y - STOMP_HEIGHT_MARGIN) {
       if (isInitial) {
         e.trigger("stomped");
         obj.vel.y = -STOMP_BOUNCE;

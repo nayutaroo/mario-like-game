@@ -31,6 +31,8 @@ export const STAGE_1_1: LevelData = {
     { kind: "dangomushi", x: 2300, y: 638 },
   ],
   items: [
+    // 挙動確認用: スタート地点付近にリンゴ（種発射の向きをすぐ試せるように）
+    { kind: "apple", x: 140, y: 600 },
     { kind: "acorn", x: 200, y: 600 },
     { kind: "berry", x: 720, y: 600 },
     { kind: "berry", x: 760, y: 600 },
