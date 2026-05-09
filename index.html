@@ -82,58 +82,72 @@
       }
       .touch-pad {
         position: absolute;
-        bottom: max(16px, env(safe-area-inset-bottom));
+        bottom: max(12px, env(safe-area-inset-bottom));
         display: flex;
         align-items: flex-end;
-        gap: 12px;
+        gap: 10px;
         pointer-events: none;
       }
       .touch-pad-left {
-        left: max(16px, env(safe-area-inset-left));
+        left: max(12px, env(safe-area-inset-left));
       }
       .touch-pad-right {
-        right: max(16px, env(safe-area-inset-right));
+        right: max(12px, env(safe-area-inset-right));
       }
       .touch-btn {
         pointer-events: auto;
-        width: 72px;
-        height: 72px;
+        /* 非アクティブ時は小さく半透明にしてステージ視認性を優先。
+           押下時に拡大＋不透明化して操作感は維持する */
+        width: 54px;
+        height: 54px;
         margin: 0;
         padding: 0;
-        border-radius: 16px;
-        font-size: 22px;
+        border-radius: 14px;
+        font-size: 18px;
         font-weight: 600;
         font-family: inherit;
         color: #fff;
-        background: linear-gradient(180deg, rgba(80, 100, 130, 0.45), rgba(40, 55, 80, 0.55));
-        border: 1.5px solid rgba(255, 255, 255, 0.35);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(180deg, rgba(80, 100, 130, 0.28), rgba(40, 55, 80, 0.36));
+        border: 1.5px solid rgba(255, 255, 255, 0.22);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         touch-action: manipulation;
         cursor: pointer;
-        transition: transform 0.06s ease, background 0.1s ease, box-shadow 0.1s ease;
+        opacity: 0.55;
+        transition:
+          transform 0.08s ease,
+          opacity 0.12s ease,
+          background 0.1s ease,
+          box-shadow 0.1s ease;
         -webkit-tap-highlight-color: transparent;
       }
       .touch-btn-large {
-        width: 92px;
-        height: 92px;
-        font-size: 32px;
-        border-radius: 20px;
+        width: 72px;
+        height: 72px;
+        font-size: 26px;
+        border-radius: 18px;
       }
       .touch-btn[data-key="jump"] {
-        background: linear-gradient(180deg, rgba(80, 140, 220, 0.55), rgba(40, 90, 170, 0.65));
+        background: linear-gradient(180deg, rgba(80, 140, 220, 0.32), rgba(40, 90, 170, 0.42));
       }
       .touch-btn[data-key="dash"] {
-        background: linear-gradient(180deg, rgba(220, 160, 80, 0.5), rgba(170, 110, 40, 0.6));
+        background: linear-gradient(180deg, rgba(220, 160, 80, 0.32), rgba(170, 110, 40, 0.42));
       }
       .touch-btn[data-key="shoot"] {
-        background: linear-gradient(180deg, rgba(220, 90, 130, 0.5), rgba(170, 50, 90, 0.6));
+        background: linear-gradient(180deg, rgba(220, 90, 130, 0.32), rgba(170, 50, 90, 0.42));
+      }
+      /* 指がボタン領域に重なっている瞬間（タップ前ホバー含む）は少し見やすく */
+      @media (hover: hover) {
+        .touch-btn:hover {
+          opacity: 0.85;
+        }
       }
       .touch-btn.is-pressed {
-        transform: scale(0.94);
-        background: rgba(255, 255, 255, 0.25);
+        transform: scale(0.92);
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.32);
         box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
       }
     </style>

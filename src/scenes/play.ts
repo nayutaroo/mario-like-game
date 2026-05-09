@@ -1,4 +1,4 @@
-import { EMOJI_FONT, PHYSICS } from "../config";
+import { PHYSICS } from "../config";
 import { addCheckpoint } from "../entities/checkpoint";
 import { addBoss } from "../entities/enemies/boss";
 import { addDangomushi } from "../entities/enemies/dangomushi";
@@ -18,8 +18,11 @@ import { addSemiSolid } from "../entities/semi-solid";
 import { addWarp } from "../entities/warp";
 import { getLevel } from "../levels";
 import type { MysteryContent } from "../levels/types";
+import { createBossHpBar } from "../systems/boss-hp-bar";
 import { createHud } from "../systems/hud";
+import { showToast } from "../systems/toast";
 import { setTouchButtonsVisible } from "../systems/touch-buttons";
+import { addVignette } from "../systems/vignette";
 import type { KCtx, StageId } from "../types";
 import { buildHelpOverlay } from "./help";
 
@@ -200,16 +203,36 @@ export function registerPlayScene(k: KCtx): void {
         score += BERRY_SCORE;
         hud.setScore(score);
         hud.setBerries(berries);
+        showToast(k, player.obj.pos.x, player.obj.pos.y - 50, `+${BERRY_SCORE}`, {
+          color: [180, 220, 255],
+          size: 18,
+          rise: 28,
+          duration: 0.7,
+        });
         if (berries >= BERRY_PER_LIFE) {
           berries -= BERRY_PER_LIFE;
           lives += 1;
           hud.setBerries(berries);
           hud.setLives(lives);
+          showToast(k, k.width() / 2, k.height() * 0.4, "1UP!", {
+            color: [180, 255, 180],
+            size: 44,
+            duration: 1.2,
+            rise: 30,
+            fixed: true,
+            z: 90,
+          });
         }
       },
       onLifeUp: () => {
         lives += 1;
         hud.setLives(lives);
+        showToast(k, player.obj.pos.x, player.obj.pos.y - 50, "1UP!", {
+          color: [180, 255, 180],
+          size: 28,
+          rise: 36,
+          duration: 1.0,
+        });
       },
     });
 
@@ -218,27 +241,73 @@ export function registerPlayScene(k: KCtx): void {
     const setupBoss = () => {
       if (!level.boss) return;
       const boss = addBoss(k, level.boss.x, level.boss.y);
-      const renderHearts = (hp: number, max: number) =>
-        "❤️".repeat(Math.max(0, hp)) + "🖤".repeat(Math.max(0, max - hp));
-      const bossHpText = k.add([
-        k.text(`BOSS ${renderHearts(boss.getHp(), boss.getMaxHp())}`, {
-          size: 22,
-          font: EMOJI_FONT,
-        }),
-        k.pos(k.width() / 2, 24),
-        k.anchor("center"),
-        k.color(255, 220, 220),
-        k.fixed(),
-        k.z(60),
-      ]);
+      const hpBar = createBossHpBar(k, boss.getMaxHp());
+      hpBar.setHp(boss.getHp());
+
       boss.obj.on("damaged", (hp: number) => {
-        bossHpText.text = `BOSS ${renderHearts(hp, boss.getMaxHp())}`;
+        hpBar.setHp(hp);
+        hpBar.flashDamage();
+        // ボスの少し上にダメージトースト
+        showToast(k, boss.obj.pos.x, boss.obj.pos.y - 80, "-1 HP", {
+          color: [255, 200, 200],
+          size: 26,
+        });
+      });
+      boss.obj.on("seed-progress", (hits: number) => {
+        hpBar.setSeedProgress(hits, boss.getSeedsPerDamage());
+      });
+      boss.obj.on("phase-change", (phase: string) => {
+        // フェーズ突入のフィードバック
+        const label = phase === "angry" ? "怒モード!" : phase === "panic" ? "ピンチ!! 暴走!!" : "";
+        if (label) {
+          showToast(k, k.width() / 2, k.height() * 0.35, label, {
+            color: phase === "panic" ? [255, 100, 100] : [255, 180, 80],
+            size: 38,
+            duration: 1.4,
+            rise: 10,
+            fixed: true,
+            z: 90,
+          });
+        }
+      });
+      // 衝撃波: ボス着地時にプレイヤーが地上に居れば damage
+      boss.obj.on("shockwave", (info: { x: number; radius: number }) => {
+        // 視覚演出: 中央に光る輪
+        const ring = k.add([
+          k.rect(40, 16, { radius: 8 }),
+          k.pos(info.x, boss.obj.pos.y - 8),
+          k.color(255, 220, 120),
+          k.opacity(0.85),
+          k.outline(2, k.rgb(255, 180, 60)),
+          k.anchor("center"),
+          k.z(50),
+        ]);
+        let t = 0;
+        ring.onUpdate(() => {
+          if (ring.paused) return;
+          t += k.dt();
+          ring.width = 40 + t * 1100;
+          ring.opacity = Math.max(0, 0.85 - t * 2.4);
+          if (t >= 0.36) ring.destroy();
+        });
+        // プレイヤーが地上 + 横距離内 → ダメージ
+        const dx = Math.abs(player.obj.pos.x - info.x);
+        if (dx <= info.radius && player.obj.isGrounded()) {
+          player.damage();
+        }
       });
       boss.obj.on("defeated", () => {
         score += 1000;
         hud.setScore(score);
-        bossHpText.text = "BOSS DEFEATED!";
-        bossHpText.color = k.rgb(255, 240, 120);
+        hpBar.setDefeated();
+        showToast(k, k.width() / 2, k.height() * 0.4, "BOSS DEFEATED!", {
+          color: [255, 240, 120],
+          size: 48,
+          duration: 1.6,
+          rise: 24,
+          fixed: true,
+          z: 90,
+        });
         k.wait(1.5, () => {
           k.go("gameover", { reason: "cleared" });
         });
@@ -277,6 +346,10 @@ export function registerPlayScene(k: KCtx): void {
         enemy.trigger("stomped");
         score += STOMP_SCORE;
         hud.setScore(score);
+        showToast(k, enemy.pos.x, enemy.pos.y - 30, `+${STOMP_SCORE}`, {
+          color: [255, 240, 120],
+          size: 22,
+        });
       }
     });
 
@@ -374,6 +447,9 @@ export function registerPlayScene(k: KCtx): void {
       k.fixed(),
       k.z(60),
     ]);
+
+    // 画面隅ビネット (HUD・ボタンよりも下、ステージより上)
+    addVignette(k);
 
     setTouchButtonsVisible(true);
 
