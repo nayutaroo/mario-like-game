@@ -14,6 +14,7 @@ import { addSeed } from "../entities/items/seed";
 import { addSparkle } from "../entities/items/sparkle";
 import { addMysteryBlock } from "../entities/mystery-block";
 import { addPlayer } from "../entities/player";
+import { addSemiSolid } from "../entities/semi-solid";
 import { addTouchButtons, isTouchDevice } from "../entities/touch-buttons";
 import { addWarp } from "../entities/warp";
 import { getLevel } from "../levels";
@@ -76,6 +77,12 @@ export function registerPlayScene(k: KCtx): void {
         k.body({ isStatic: true }),
         "ground",
       ]);
+    }
+
+    if (level.semiSolids) {
+      for (const ss of level.semiSolids) {
+        addSemiSolid(k, ss.x, ss.y, ss.w, ss.h, ss.variant);
+      }
     }
 
     if (level.goal) {

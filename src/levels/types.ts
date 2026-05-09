@@ -2,6 +2,17 @@ import type { ItemKind, StageId } from "../types";
 
 export type PlatformDef = { x: number; y: number; w: number; h: number };
 
+// すり抜け足場 (one-way / semi-solid platform)
+// 上から落下してきたときのみ着地し、下から / 横からはすり抜ける
+export type SemiSolidVariant = "cloud" | "branch" | "grass" | "rock";
+export type SemiSolidDef = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  variant?: SemiSolidVariant;
+};
+
 export type EnemyDef =
   | { kind: "imomushi"; x: number; y: number }
   | { kind: "dangomushi"; x: number; y: number }
@@ -45,6 +56,7 @@ export type LevelData = {
   deathPlaneY: number;
   verticalScroll: boolean;
   platforms: PlatformDef[];
+  semiSolids?: SemiSolidDef[];
   enemies: EnemyDef[];
   items: ItemDef[];
   checkpoints: { x: number; y: number }[];
