@@ -1,3 +1,4 @@
+import { EMOJI_FONT } from "../../config";
 import type { KCtx } from "../../types";
 
 const WIDTH = 28;
@@ -15,6 +16,12 @@ export function addImomushi(k: KCtx, x: number, y: number) {
     k.anchor("bot"),
     "enemy",
     "imomushi",
+  ]);
+
+  obj.add([
+    k.text("🐛", { size: 20, font: EMOJI_FONT }),
+    k.anchor("center"),
+    k.pos(0, -HEIGHT / 2),
   ]);
 
   let dir = -1;

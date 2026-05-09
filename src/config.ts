@@ -25,3 +25,5 @@ export const PHYSICS = {
 export const STORAGE_KEYS = {
   highscore: "piyo-game:highscore",
 } as const;
+
+export const EMOJI_FONT = "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif";

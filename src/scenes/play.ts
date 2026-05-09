@@ -53,7 +53,12 @@ export function registerPlayScene(k: KCtx): void {
       "goal",
     ]);
 
-    const player = addPlayer(k, SPAWN_X, SPAWN_Y);
+    const resetCamera = () => {
+      k.setCamPos(k.width() / 2, k.height() / 2);
+    };
+    resetCamera();
+
+    const player = addPlayer(k, SPAWN_X, SPAWN_Y, resetCamera);
 
     addImomushi(k, 320, 638);
     addImomushi(k, 900, 638);
@@ -70,6 +75,7 @@ export function registerPlayScene(k: KCtx): void {
     k.onUpdate(() => {
       if (player.obj.pos.y > DEATH_PLANE_Y) {
         player.reset(SPAWN_X, SPAWN_Y);
+        return;
       }
 
       const minCamX = k.width() / 2;

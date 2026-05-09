@@ -1,21 +1,33 @@
-import { PHYSICS } from "../config";
+import { EMOJI_FONT, PHYSICS } from "../config";
 import type { KCtx } from "../types";
 
 const PLAYER_WIDTH = 36;
 const PLAYER_HEIGHT = 44;
 const STOMP_BOUNCE = 360;
 
-export function addPlayer(k: KCtx, spawnX: number, spawnY: number) {
+type EnemyLike = {
+  pos: { x: number; y: number };
+  stillBall?: boolean;
+  trigger: (event: string, ...args: unknown[]) => void;
+};
+
+export function addPlayer(k: KCtx, spawnX: number, spawnY: number, onReset?: () => void) {
   const obj = k.add([
     k.rect(PLAYER_WIDTH, PLAYER_HEIGHT),
     k.pos(spawnX, spawnY),
     k.color(240, 200, 60),
     k.outline(2, k.rgb(80, 50, 0)),
     k.area(),
-    k.body({ jumpForce: PHYSICS.jumpVel }),
+    k.body(),
     k.opacity(1),
     k.anchor("bot"),
     "player",
+  ]);
+
+  obj.add([
+    k.text("🐤", { size: 32, font: EMOJI_FONT }),
+    k.anchor("center"),
+    k.pos(0, -PLAYER_HEIGHT / 2),
   ]);
 
   let coyoteTimer = 0;
@@ -30,6 +42,7 @@ export function addPlayer(k: KCtx, spawnX: number, spawnY: number) {
     coyoteTimer = 0;
     jumpBufferTimer = 0;
     isJumpHeld = false;
+    onReset?.();
   };
 
   const damage = (): boolean => {
@@ -71,7 +84,7 @@ export function addPlayer(k: KCtx, spawnX: number, spawnY: number) {
     }
 
     if (jumpBufferTimer > 0 && coyoteTimer > 0) {
-      obj.jump(PHYSICS.jumpVel);
+      obj.vel.y = -PHYSICS.jumpVel;
       jumpBufferTimer = 0;
       coyoteTimer = 0;
       isJumpHeld = true;
@@ -114,19 +127,34 @@ export function addPlayer(k: KCtx, spawnX: number, spawnY: number) {
   k.onKeyRelease("space", releaseJump);
   k.onKeyRelease("k", releaseJump);
 
-  obj.onCollide("enemy", (enemy, col) => {
+  const handleEnemyContact = (enemy: unknown, isInitial: boolean) => {
     if (paused) return;
-    if (col?.isBottom() && obj.vel.y > 0) {
-      enemy.trigger("stomped");
-      obj.vel.y = -STOMP_BOUNCE;
+    const e = enemy as EnemyLike;
+
+    if (obj.pos.y < e.pos.y) {
+      if (isInitial) {
+        e.trigger("stomped");
+        obj.vel.y = -STOMP_BOUNCE;
+      }
       return;
     }
-    if ((enemy as { stillBall?: boolean }).stillBall) {
-      const fromDir = col?.isLeft() ? 1 : -1;
-      enemy.trigger("kicked", fromDir);
+
+    if (e.stillBall) {
+      if (isInitial) {
+        const fromDir = e.pos.x < obj.pos.x ? 1 : -1;
+        e.trigger("kicked", fromDir);
+      }
       return;
     }
+
     damage();
+  };
+
+  k.onCollide("player", "enemy", (_p, enemy) => {
+    handleEnemyContact(enemy, true);
+  });
+  k.onCollideUpdate("player", "enemy", (_p, enemy) => {
+    handleEnemyContact(enemy, false);
   });
 
   return { obj, reset, damage, setPaused };

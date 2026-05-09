@@ -1,3 +1,4 @@
+import { EMOJI_FONT } from "../../config";
 import type { KCtx } from "../../types";
 
 const WIDTH = 28;
@@ -18,6 +19,12 @@ export function addDangomushi(k: KCtx, x: number, y: number) {
     k.anchor("bot"),
     "enemy",
     "dangomushi",
+  ]);
+
+  obj.add([
+    k.text("🐞", { size: 22, font: EMOJI_FONT }),
+    k.anchor("center"),
+    k.pos(0, -HEIGHT / 2),
   ]);
 
   const state = { mode: "walk" as DangoMode, dir: -1 };
