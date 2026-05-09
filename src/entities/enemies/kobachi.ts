@@ -1,3 +1,4 @@
+import { EMOJI_FONT } from "../../config";
 import type { KCtx } from "../../types";
 
 const WIDTH = 28;
@@ -15,6 +16,8 @@ export function addKobachi(k: KCtx, x: number, y: number, leftBound: number, rig
     "enemy",
     "kobachi",
   ]);
+
+  obj.add([k.text("🐝", { size: 20, font: EMOJI_FONT }), k.anchor("center"), k.pos(0, 0)]);
 
   let dir = -1;
 
