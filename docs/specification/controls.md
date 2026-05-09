@@ -5,6 +5,8 @@
 - **【確定】** PC キーボードを必須とする
 - **【確定】** タッチ操作（スマホ／タブレット／キーボード非搭載のネイティブアプリ環境）に対応するため、画面上にオンスクリーンボタンを重ねて表示する
 - **【確定】** ゲームパッドは初期スコープ外（将来検討）
+- **【確定】** 画面右上に**フルスクリーン切替ボタン (⛶)** を表示する。Fullscreen API が無効な環境（iOS Safari など）ではボタンを非表示にする
+- **【確定】** iOS Safari は「ホーム画面に追加」経由でフルスクリーン表示できるよう、`apple-mobile-web-app-capable` 等の meta タグと `manifest.webmanifest`（`display: fullscreen`, `orientation: landscape`）を提供する
 
 ## キー配置
 

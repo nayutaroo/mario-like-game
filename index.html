@@ -2,8 +2,18 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>ピヨのぼうけん</title>
+    <!-- iOS: ホーム画面に追加した時にフルスクリーン (Safari UI を非表示) で起動 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ピヨのぼうけん" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#1e3c72" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <style>
       :root {
         color-scheme: dark;
@@ -28,10 +38,39 @@
            解像度を担保する */
         image-rendering: auto;
       }
+      /* フルスクリーン切替ボタン (iOS Safari 以外で機能。iOS は Add to Home Screen 経由) */
+      #fs-btn {
+        position: fixed;
+        top: max(8px, env(safe-area-inset-top));
+        right: max(8px, env(safe-area-inset-right));
+        z-index: 1000;
+        width: 40px;
+        height: 40px;
+        background: rgba(0, 0, 0, 0.45);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 8px;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        opacity: 0.6;
+        transition: opacity 0.15s ease;
+      }
+      #fs-btn:hover,
+      #fs-btn:active {
+        opacity: 1;
+      }
+      /* フルスクリーン中はボタンを目立たなく */
+      :fullscreen #fs-btn,
+      :-webkit-full-screen #fs-btn {
+        opacity: 0.3;
+      }
     </style>
   </head>
   <body>
     <div id="game"></div>
+    <button id="fs-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

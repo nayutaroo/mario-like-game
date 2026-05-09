@@ -1,0 +1,11 @@
+{
+  "name": "ピヨのぼうけん",
+  "short_name": "ピヨ",
+  "description": "Web ブラウザで動くマリオ風 2D 横スクロールアクションゲーム",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#111111",
+  "theme_color": "#1e3c72",
+  "lang": "ja"
+}
