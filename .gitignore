@@ -1,0 +1,12 @@
+# Harness Engineering のラン成果物（contract / handoff / report / final）
+outputs/
+
+# Node / Vite
+node_modules/
+dist/
+.vite/
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
